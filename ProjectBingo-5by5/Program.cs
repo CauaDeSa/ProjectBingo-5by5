@@ -29,7 +29,7 @@ string[] playersName;
 int[] gameDrawnNumbers;
 
 //Matrixes
-int[,] playersScore;
+int[,] playersScores;
 
 //Matrix Vector
 int[][,] gameCharts;
@@ -127,7 +127,7 @@ void DrawNumber(int[] gameDrawnNumbers, int roundsQuantity)
     } while (isAlreadyDrawn(gameDrawnNumbers, roundsQuantity));
 }
 
-void checkChart(int[,] chart, int drawn, int player, int[,] playersScore, bool[] canScore)
+void checkChart(int[,] chart, int drawn, int player, int[,] playersScores, bool[] canScore)
 {
     int chartMatchedNumbers = 0;
     int[] lineMatchedNumbers = new int[CHART_MAX_ROW];
@@ -146,7 +146,7 @@ void checkChart(int[,] chart, int drawn, int player, int[,] playersScore, bool[]
             {
                 columnMatchedNumbers[line]++;
                 chartMatchedNumbers++;
-                playersScore[player, MATCHED_COLUMN]++;
+                playersScores[player, MATCHED_COLUMN]++;
             }
             
             if (chart[column, line] < 0)
@@ -155,18 +155,18 @@ void checkChart(int[,] chart, int drawn, int player, int[,] playersScore, bool[]
 
         if ((canScore[0] && columnMatchedNumbers[column] == CHART_MAX_ROW))
         {
-            playersScore[player, PLAYER_COLUMN]++;
+            playersScores[player, PLAYER_COLUMN]++;
             canScore[0] = false;
         }
 
         if (canScore[1] && lineMatchedNumbers[column] == CHART_MAX_ROW)
         {
-            playersScore[player, PLAYER_COLUMN]++;
+            playersScores[player, PLAYER_COLUMN]++;
             canScore[1] = false;
         }
 
         if (chartMatchedNumbers == CHART_MAXSIZE)
-            playersScore[player, PLAYER_COLUMN] += 5;
+            playersScores[player, PLAYER_COLUMN] += 5;
     }
 }
 
@@ -180,7 +180,7 @@ int[] sortScoreBoard(int[,] playersScores)
     for (int i = 0; i < playersScores.Length / 2; i++)
         if (playersScores[higher, PLAYER_COLUMN] < playersScores[i, PLAYER_COLUMN])
             higher = i;
-        else if (playersScores[higher, PLAYER_COLUMN] == playersScores[i, PLAYER_COLUMN] && playersScore[higher, MATCHED_COLUMN] < playersScore[i, MATCHED_COLUMN])
+        else if (playersScores[higher, PLAYER_COLUMN] == playersScores[i, PLAYER_COLUMN] && playersScores[higher, MATCHED_COLUMN] < playersScores[i, MATCHED_COLUMN])
                 higher = i;
 
 
@@ -191,17 +191,21 @@ int[] sortScoreBoard(int[,] playersScores)
         if (playersScores[i, PLAYER_COLUMN] < playersScores[minor, PLAYER_COLUMN])
             aux = minor = i;
 
-    for (int index = 0; index < playersQuantity - 1; index++)
+    for (int index = 0, found; index < playersQuantity - 1; index++)
     {
         minor = aux;
+        found = 0;
 
         for (int position = 0; position < playersQuantity; position++)
         {
-            if (playersScores[position, PLAYER_COLUMN] >= playersScores[minor, PLAYER_COLUMN] && playersScores[position, PLAYER_COLUMN] <= playersScore[ranking[last], PLAYER_COLUMN])
+            if (playersScores[position, PLAYER_COLUMN] >= playersScores[minor, PLAYER_COLUMN] && playersScores[position, PLAYER_COLUMN] <= playersScores[ranking[last], PLAYER_COLUMN])
                 if (playersScores[position, PLAYER_COLUMN] == playersScores[ranking[last], PLAYER_COLUMN])
                 {
-                    if (position > lastOccurrence)
+                    if (position > lastOccurrence && found == 0)
+                    {
                         minor = position;
+                        found = 1;
+                    }
                 }
                 
                 else
@@ -215,28 +219,28 @@ int[] sortScoreBoard(int[,] playersScores)
     return ranking;
 }
 
-void showScoreBoard(string[] playersName, int[,] playersScore, int playersQuantity)
+void showScoreBoard(string[] playersName, int[,] playersScores, int playersQuantity)
 {
     SystemTitle();
 
     Console.WriteLine("------------- GAME RANKING -------------\n\n");
 
-    int[] ranking = sortScoreBoard(playersScore);
+    int[] ranking = sortScoreBoard(playersScores);
 
     for (int player = 0; player < playersQuantity; player++)
-        Console.WriteLine($"{playersName[ranking[player]]} ended up with {playersScore[ranking[player], PLAYER_COLUMN]} points!");
+        Console.WriteLine($"{playersName[ranking[player]]} ended up with {playersScores[ranking[player], PLAYER_COLUMN]} points {playersScores[player, 0]} {playersScores[player, 1]} {ranking[player]}!");
 }
 
-void GameResultMessage(int roundsQuantity, int playersQuantity, string[] playersName, int[,] playersScore, int player){
+void GameResultMessage(int roundsQuantity, int playersQuantity, string[] playersName, int[,] playersScores, int player){
     SystemTitle();
 
     Console.WriteLine($"\nThe game ended with {roundsQuantity}° rounds!");
     Console.WriteLine($"\n{playersName[player]} is the winner!\n");
 
-    showScoreBoard(playersName, playersScore, playersQuantity);
+    showScoreBoard(playersName, playersScores, playersQuantity);
 
     Console.WriteLine("Press any key to continue...");
-    Console.ReadKey();
+    //Console.ReadKey();
 
 }
 
@@ -275,7 +279,8 @@ do
 
     gameDrawnNumbers = new int[GAME_MAX_NUMBER];
     playersName = new string[playersQuantity];
-    playersScore = new int[playersQuantity, 2];
+    playersScores = new int[3, 2] { { 5, 5 }, { 5, 5 }, { 0, 5 } };
+    //playersScores = new int[playersQuantity, 2];
     ChartsQuantityByPlayer = new int[playersQuantity];
 
     for (int player = 0; player < playersQuantity; player++)
@@ -304,9 +309,9 @@ do
         for (int player = 0, chartCount = 0; player < playersQuantity; player++)
             for (int playerChart = 0; playerChart < ChartsQuantityByPlayer[player]; playerChart++, chartCount++)
             {
-                 checkChart(gameCharts[chartCount], gameDrawnNumbers[roundsQuantity], player, playersScore, canScore);
+                checkChart(gameCharts[chartCount], gameDrawnNumbers[roundsQuantity], player, playersScores, canScore);
 
-                if (playersScore[player, PLAYER_COLUMN] >= 5 && winner == 0)
+                if (playersScores[player, PLAYER_COLUMN] >= 5 && winner == 0)
                 {
                     winner = player;
                     hasWinner = true;
@@ -315,11 +320,14 @@ do
 
     } while (!hasWinner);
 
-    GameResultMessage(roundsQuantity, playersQuantity, playersName, playersScore, winner);
+    winner = 0;
+    roundsQuantity = 10;
 
-    for (int player = 0, chartCount = 0; player < playersQuantity; player++)
-        for (int playerChart = 0; playerChart < ChartsQuantityByPlayer[player]; playerChart++, chartCount++)
-            ShowMatrix(gameCharts[chartCount], playerChart + 1, playersName[player]);
+    GameResultMessage(roundsQuantity, playersQuantity, playersName, playersScores, winner);
+
+    //for (int player = 0, chartCount = 0; player < playersQuantity; player++)
+    //    for (int playerChart = 0; playerChart < ChartsQuantityByPlayer[player]; playerChart++, chartCount++)
+    //        ShowMatrix(gameCharts[chartCount], playerChart + 1, playersName[player]);
 
     Console.Write("\n\nType 'y' to play again: ");
 } while (Console.ReadLine() == "y");
