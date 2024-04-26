@@ -167,7 +167,7 @@ void ShowMatrix(int[,] matrix, int playerChart, String playerName)
         for (int column = 0; column < CHART_MAX_ROW; column++)
         {
             if (matrix[line, column] < 0)
-                Console.Write($"{matrix[line, column]:00} ");
+                Console.Write($"[{matrix[line, column] * NUMBER_MATCHER:00}]");
             else 
                 Console.Write($" {matrix[line, column]:00} ");
         }
