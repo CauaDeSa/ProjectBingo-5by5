@@ -172,51 +172,48 @@ void checkChart(int[,] chart, int drawn, int player, int[,] playersScores, bool[
 
 int[] sortScoreBoard(int[,] playersScores)
 {
-    int minor, higher, aux, count, lastOccurrence, last;
-    int[] ranking = new int[playersScores.Length / 2];
+    int[,] ranking = new int[3, 2] { { 0, playersScores[0, 0] }, { 1, playersScores[1, 0] }, { 2, playersScores[2, 0] } };
 
-    lastOccurrence = count = higher =  minor = aux = last = 0;
+    int i, j, auxElement, aux2;
+    bool changed = true;
 
-    for (int i = 0; i < playersScores.Length / 2; i++)
-        if (playersScores[higher, PLAYER_COLUMN] < playersScores[i, PLAYER_COLUMN])
-            higher = i;
-        else if (playersScores[higher, PLAYER_COLUMN] == playersScores[i, PLAYER_COLUMN] && playersScores[higher, MATCHED_COLUMN] < playersScores[i, MATCHED_COLUMN])
-                higher = i;
-
-
-    ranking[count] = higher;
-    lastOccurrence = higher;
-
-    for (int i = 0; i < playersScores.Length / 2; i++)
-        if (playersScores[i, PLAYER_COLUMN] < playersScores[minor, PLAYER_COLUMN])
-            aux = minor = i;
-
-    for (int index = 0, found; index < playersQuantity - 1; index++)
+    for (i = 0; i < 3 && changed; i++)
     {
-        minor = aux;
-        found = 0;
+        changed = false;
 
-        for (int position = 0; position < playersQuantity; position++)
+        for (j = 0; j < 3 - (1 + i); j++)
         {
-            if (playersScores[position, PLAYER_COLUMN] >= playersScores[minor, PLAYER_COLUMN] && playersScores[position, PLAYER_COLUMN] <= playersScores[ranking[last], PLAYER_COLUMN])
-                if (playersScores[position, PLAYER_COLUMN] == playersScores[ranking[last], PLAYER_COLUMN])
-                {
-                    if (position > lastOccurrence && found == 0)
-                    {
-                        minor = position;
-                        found = 1;
-                    }
-                }
-                
-                else
-                    minor = position;
-        }
+            if (ranking[j, 1] < ranking[j + 1, 1])
+            {
+                auxElement = ranking[j, 1];
+                ranking[j, 0] = ranking[j + 1, 1];
+                ranking[j + 1, 0] = auxElement;
 
-        lastOccurrence = minor;
-        ranking[++last] = minor;
+                aux2 = ranking[j, 1];
+                ranking[j, 1] = ranking[j + 1, 1];
+                ranking[j + 1, 1] = auxElement;
+                changed = true;
+            }
+
+            if (ranking[j, 1] == ranking[j + 1, 1])
+            {
+                if (playersScores[ranking[j, 0], 1] < playersScores[ranking[j + 1, 0], 1])
+                {
+                    auxElement = ranking[j, 0];
+                    ranking[j, 0] = ranking[j + 1, 0];
+                    ranking[j + 1, 0] = auxElement;
+
+                    aux2 = ranking[j, 1];
+                    ranking[j, 1] = ranking[j + 1, 1];
+                    ranking[j + 1, 1] = aux2;
+                    changed = true;
+                }
+
+            }
+        }
     }
 
-    return ranking;
+    return new int[3] { ranking[0, 0], ranking[1, 0], ranking[2, 0] };
 }
 
 void showScoreBoard(string[] playersName, int[,] playersScores, int playersQuantity)
@@ -228,7 +225,7 @@ void showScoreBoard(string[] playersName, int[,] playersScores, int playersQuant
     int[] ranking = sortScoreBoard(playersScores);
 
     for (int player = 0; player < playersQuantity; player++)
-        Console.WriteLine($"{playersName[ranking[player]]} ended up with {playersScores[ranking[player], PLAYER_COLUMN]} points {playersScores[player, 0]} {playersScores[player, 1]} {ranking[player]}!");
+        Console.WriteLine($"{playersName[ranking[player]]} ended up with {playersScores[ranking[player], PLAYER_COLUMN]} points {playersScores[ranking[player], 0]} {playersScores[ranking[player], 1]} {ranking[player]}!");
 }
 
 void GameResultMessage(int roundsQuantity, int playersQuantity, string[] playersName, int[,] playersScores, int player){
@@ -279,8 +276,7 @@ do
 
     gameDrawnNumbers = new int[GAME_MAX_NUMBER];
     playersName = new string[playersQuantity];
-    playersScores = new int[3, 2] { { 5, 5 }, { 5, 5 }, { 0, 5 } };
-    //playersScores = new int[playersQuantity, 2];
+    playersScores = new int[playersQuantity, 2];
     ChartsQuantityByPlayer = new int[playersQuantity];
 
     for (int player = 0; player < playersQuantity; player++)
