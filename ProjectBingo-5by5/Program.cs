@@ -1,8 +1,4 @@
 ﻿//Object
-using System;
-using System.Data.Common;
-using System.Numerics;
-
 Random random = new Random();
 
 //Constants
@@ -11,10 +7,12 @@ Random random = new Random();
 	int CHART_LINE = 0;
 	int CHART_COLUMN = 1;
 	int CHARTS_MAX_QUANTITY = 10;
+
 	//Game
 	int GAME_MAX_NUMBER = 100;
 	int GAME_MIN_NUMBER = 1;
 	int HIT_COEFICIENT = -1;
+
 	//Player
 	int HIT_COLUMN = 0;
 	int POINT_COLUMN = 1;
@@ -23,8 +21,8 @@ Random random = new Random();
 //Integers
 	//Player
 	int playersQuantity;
+
 	//Game
-	int gameChartsQuantity;
 	int roundCount;
 	int chartsQuantityByPlayer;
 	int menuChoose;
@@ -36,6 +34,7 @@ Random random = new Random();
 //Vector
 	//Player
 	string[] playersName;
+
 	//Game
 	int[] gameDrawnNumbers;
 	int[] playerCanScore;
@@ -47,11 +46,9 @@ Random random = new Random();
 //Matrix Vector
 	//Player
 	int[,][,] playerChartHits;
+
 	//Game
 	int[,][,] gameCharts;
-
-//Temp
-string[] nomes;
 
 void SystemTitle()
 {
@@ -59,7 +56,7 @@ void SystemTitle()
     Console.WriteLine("\t\t\t  ______ _                     _____                      \r\n\t\t\t  | ___ (_)                   |  __ \\                     \r\n\t\t\t  | |_/ /_ _ __   __ _  ___   | |  \\/ __ _ _ __ ___   ___ \r\n\t\t\t  | ___ \\ | '_ \\ / _` |/ _ \\  | | __ / _` | '_ ` _ \\ / _ \\\r\n\t\t\t  | |_/ / | | | | (_| | (_) | | |_\\ \\ (_| | | | | | |  __/\r\n\t\t\t  \\____/|_|_| |_|\\__, |\\___/   \\____/\\__,_|_| |_| |_|\\___|\r\n\t\t\t                  __/ |                                   \r\n\t\t\t                 |___/                                    \n\n");
 }
 
-int ScanNumber(int min, int max)
+int TitledNumberScan(string message, int min, int max)
 {
 	int result;
 	string input;
@@ -68,7 +65,10 @@ int ScanNumber(int min, int max)
 	{
 		do
 		{
-			input = Console.ReadLine();
+			SystemTitle();
+            Console.Write(message);
+            input = Console.ReadLine();
+
 		} while (!int.TryParse(input, out result));
 
 	} while (int.Parse(input) < min || int.Parse(input) > max);
@@ -76,11 +76,12 @@ int ScanNumber(int min, int max)
 	return result;
 }
 
-string ScanString(String message)
+string TitledStringScan(String message)
 {
     string input;
     do
     {
+        SystemTitle();
         Console.Write(message);
         input = Console.ReadLine();
     } while (string.IsNullOrEmpty(input) || input.Trim().Length == 0);
@@ -91,22 +92,41 @@ string ScanString(String message)
 int GetPlayersQuantity()
 {
 	SystemTitle();
-	Console.Write("\t\t\tHow many players will play?\n\t\t\tQuantity: ");
-
-	return ScanNumber(1, PLAYERS_MAX_QUANTITY);
+	return TitledNumberScan("\t\t\tHow many players will play?\n\t\t\tQuantity: ", 1, PLAYERS_MAX_QUANTITY);
 }
 
-string GetPlayerName(int playerNumber)
+void GetPlayersName(string[] playersName, int playersQuantity)
 {
 	SystemTitle();
-	return ScanString($"\t\t\tPlayer {playerNumber + 1}, type your name: ");
+	for (int player = 0; player < playersQuantity; player++)
+		playersName[player] = TitledStringScan($"\t\t\tPlayer {player + 1}, type your name: ");
 }
 
 int GetChartsQuantity()
 {
 	SystemTitle();
-	Console.Write($"\t\t\tHow many charts by player: ");
-	return ScanNumber(1, CHARTS_MAX_QUANTITY);
+	return TitledNumberScan("\t\t\tHow many charts by player: ", 1, CHARTS_MAX_QUANTITY);
+}
+
+void InitPlayersScores(int[,] playersScores, int playersQuantity)
+{
+    for (int player = 0; player < playersQuantity; player++)
+        for (int j = 0; j < 2; j++)
+            playersScores[player, j] = 0;
+}
+
+void InitPlayerChartHits(int[,][,] playerChartHits, int playersQuantity, int chartsQuantityByPlayer)
+{
+    for (int player = 0; player < playersQuantity; player++)
+        for (int playerChart = 0, chartCount = 0; playerChart < chartsQuantityByPlayer; playerChart++, chartCount++)
+            playerChartHits[player, chartCount] = new int[2, CHART_MAX_ROW];
+}
+
+void InitGameCharts(int[,][,] gameCharts, int playersQuantity, int chartsQuantityByPlayer)
+{
+    for (int player = 0; player < playersQuantity; player++)
+        for (int playerChart = 0, chartCount = 0; playerChart < chartsQuantityByPlayer; playerChart++, chartCount++)
+            gameCharts[player, chartCount] = CreateChart();
 }
 
 bool IsAlreadyAt(int[,] chart, int chartFillCounter, int number)
@@ -240,14 +260,6 @@ string checkChart(int[,] chart, int[,] playerChartHits, int[,] playersScores, in
 	return situation;
 }
 
-void ShowMenu(){
-	SystemTitle();
-    Console.WriteLine("\t\t\t[0] Exit");
-    Console.WriteLine("\t\t\t[1] Players matrices");
-	Console.WriteLine("\t\t\t[2] Ranking");
-    Console.WriteLine("\t\t\t[3] Play Again");
-}
-
 int[] sortScoreBoard(int[,] playersScores)
 {
 	int[] ranking = new int[playersScores.GetLength(0)];
@@ -295,7 +307,7 @@ void showScoreBoard(string[] playersName, int[,] playersScores, int playersQuant
 	int[] ranking = sortScoreBoard(playersScores);
 
 	for (int player = 0; player < playersQuantity; player++)
-        Console.WriteLine($"\t\t\t\t\t{String.Format(playersName[ranking[player]])} ended up with {playersScores[ranking[player], POINT_COLUMN]} points!");
+        Console.WriteLine($"\t\t\t\t\t  {playersName[ranking[player]]} ended up with {playersScores[ranking[player], POINT_COLUMN]} points!");
 }
 
 void ShowGameResult(int roundCount, int playersQuantity, string[] playersName, int[,] playersScores, string situation)
@@ -360,42 +372,30 @@ do
 {
 	SystemTitle();
 
+	gameDrawnNumbers = new int[GAME_MAX_NUMBER];
 	playerCanScore = new int[2] { GAME_MAX_NUMBER, GAME_MAX_NUMBER };
 
-	gameChartsQuantity = 0;
-	chartsQuantityByPlayer = 0;
-	menuChoose = 0;
 	roundCount = - 1;
 	hasWinner = false;
 	string situation = "\n\t\t\t\t\t\t   History\n";
 
 	playersQuantity = GetPlayersQuantity();
 
-	gameDrawnNumbers = new int[GAME_MAX_NUMBER];
 	playersName = new string[playersQuantity];
 	playersScores = new int[playersQuantity, 2];
 
-	for (int i = 0; i < playersQuantity; i++)
-		for (int j = 0; j < 2; j++)
-			playersScores[i, j] = 0;
+	InitPlayersScores(playersScores, playersQuantity);
 
-	for (int player = 0; player < playersQuantity; player++)
-		playersName[player] = GetPlayerName(player);
-
+	GetPlayersName(playersName, playersQuantity);
 
     chartsQuantityByPlayer = GetChartsQuantity();
-    gameChartsQuantity += chartsQuantityByPlayer;
 
-    gameCharts = new int[gameChartsQuantity, chartsQuantityByPlayer][,];
-	playerChartHits = new int[gameChartsQuantity, chartsQuantityByPlayer][,];
+    gameCharts = new int[playersQuantity, chartsQuantityByPlayer][,];
+	playerChartHits = new int[playersQuantity, chartsQuantityByPlayer][,];
 
-	for (int player = 0; player < playersQuantity; player++)
-		for (int playerChart = 0, chartCount = 0; playerChart < chartsQuantityByPlayer; playerChart++, chartCount++)
-			gameCharts[player, chartCount] = CreateChart();
+	InitGameCharts(gameCharts, playersQuantity, chartsQuantityByPlayer);
 
-	for (int player = 0; player < playersQuantity; player++)
-		for (int playerChart = 0, chartCount = 0; playerChart < chartsQuantityByPlayer; playerChart++, chartCount++)
-			playerChartHits[player, chartCount] = new int[2, 5];
+	InitPlayerChartHits(playerChartHits, playersQuantity, chartsQuantityByPlayer);
 
 	SortTitle();
 
@@ -420,10 +420,7 @@ do
 
     do
 	{
-		ShowMenu();
-
-        Console.Write("\n\t\t\tYour choose: ");
-        menuChoose = ScanNumber(0, 3);
+        menuChoose = TitledNumberScan("\t\t\t[0] Exit\n\t\t\t[1] Players matrices\n\t\t\t[2] Ranking\n\t\t\t[3] Play Again\n\t\t\tYour choose: ", 0, 3);
 
         switch (menuChoose)
 		{
